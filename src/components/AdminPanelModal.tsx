@@ -591,10 +591,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   // Format Viber Message Template
   const formatViberShareMessage = (lic: LicenseToken) => {
-    const rawOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-    const fallbackOrigin = rawOrigin.replace('-dev-', '-pre-');
     const custom = (brandingForm.customAppUrl || '').trim();
-    const appUrl = (custom && custom.startsWith('http')) ? custom.replace(/\/+$/, '') : fallbackOrigin;
+    const appUrl = (custom && custom.startsWith('http')) 
+      ? custom.replace(/\/+$/, '') 
+      : 'https://solartechse3-cmyk.github.io/uniquesolarsizing';
     const link = `${appUrl}/?license=${lic.token}`;
     const durMy = lic.duration === '1_week' ? '၁ ပတ် (1 Week)' : lic.duration === '1_month' ? '၁ လ (1 Month)' : lic.duration === '3_months' ? '၃ လ (3 Months)' : lic.duration === '6_months' ? '၆ လ (6 Months)' : lic.duration === '1_year' ? '၁ နှစ် (1 Year)' : 'တစ်သက်တာ (Lifetime)';
     const devMy = lic.deviceLimit === 2 ? '၂ လုံး (2 Devices)' : '၁ လုံး (1 Device)';
@@ -607,14 +607,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 📱 ခွင့်ပြုစက်အရေအတွက်: ${devMy}
 📅 သက်တမ်းကုန်ဆုံးမည့်ရက်: ${expDate}
 
-🔑 လိုင်စင်ကုဒ် (VPN မလိုဘဲ Activate ပြုလုပ်ရန်):
+🌐 တိုက်ရိုက်ဖွင့်သည့် One-Click Link (VPN မလိုဘဲ တိုက်ရိုက်ဖွင့်ရန်):
+${link}
+
+🔑 လိုင်စင်ကုဒ် (License Key Token):
 ${lic.token}
 
-👉 အသုံးပြုနည်း (VPN မရှိပါက):
-Solar Pro App သို့မဟုတ် Website ရှိ "Enter License Key" နေရာတွင် အထက်ပါ License Key အား ကူးထည့်၍ ဖွင့်နိုင်ပါသည် (VPN မလိုဘဲ ချက်ချင်း ပွင့်ပါသည်)။
-
-🔗 တိုက်ရိုက်ဖွင့်သည့် Link (VPN ရှိပါက):
-${link}
+👉 အသုံးပြုနည်း (VPN မလိုပါ):
+ဝယ်ယူသူအနေဖြင့် အထက်ပါ Link အား တိုက်ရိုက်နှိပ်ဖွင့်ရုံဖြင့် သို့မဟုတ် App ရှိ "Enter License Key" နေရာတွင် License Key ကို ကူးထည့်ရုံဖြင့် VPN မလိုဘဲ ချက်ချင်း Activate ဖြစ်ပါသည်!
 ━━━━━━━━━━━━━━━━━
 (မှတ်ချက် - Solar Mounting Calculator, DC Breaker Calculator နှင့် String Sizer စနစ်များ အားလုံး အပြည့်အဝ အသုံးပြုနိုင်ပါပြီခင်ဗျာ။)`;
   };
@@ -998,14 +998,14 @@ ${link}
                       {/* Link & Key display */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                         <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                          <span className="text-[10px] text-slate-400 font-bold block uppercase">Direct Activation Link</span>
+                          <span className="text-[10px] text-emerald-400 font-bold block uppercase">Direct Activation Link (VPN-Free)</span>
                           <div className="flex items-center justify-between gap-1">
                             <span className="font-mono text-xs text-amber-300 truncate">
-                              {typeof window !== 'undefined' ? `${window.location.origin}/?license=${generatedResult.token}` : generatedResult.token}
+                              {`${((brandingForm.customAppUrl || '').trim() || 'https://solartechse3-cmyk.github.io/uniquesolarsizing').replace(/\/+$/, '')}/?license=${generatedResult.token}`}
                             </span>
                             <button
                               type="button"
-                              onClick={() => copyToClipboard(`${window.location.origin}/?license=${generatedResult.token}`, 'gen_link')}
+                              onClick={() => copyToClipboard(`${((brandingForm.customAppUrl || '').trim() || 'https://solartechse3-cmyk.github.io/uniquesolarsizing').replace(/\/+$/, '')}/?license=${generatedResult.token}`, 'gen_link')}
                               className="p-1 text-slate-300 hover:text-white cursor-pointer"
                               title="Copy Link"
                             >
@@ -1140,7 +1140,7 @@ ${link}
                         const isExpired = new Date(lic.expiresAt).getTime() < Date.now();
                         const boundCount = lic.boundDevices?.length || 0;
                         const daysLeft = Math.max(0, Math.ceil((new Date(lic.expiresAt).getTime() - Date.now()) / 86400000));
-                        const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
+                        const appUrl = ((brandingForm.customAppUrl || '').trim() || 'https://solartechse3-cmyk.github.io/uniquesolarsizing').replace(/\/+$/, '');
                         const shareLink = `${appUrl}/?license=${lic.token}`;
 
                         return (
@@ -1892,7 +1892,7 @@ ${link}
                       type="url"
                       value={brandingForm.customAppUrl || ''}
                       onChange={(e) => setBrandingForm({ ...brandingForm, customAppUrl: e.target.value })}
-                      placeholder="e.g. https://yourname.github.io/unique-solar-pro သို့မဟုတ် https://yourdomain.com"
+                      placeholder="https://solartechse3-cmyk.github.io/uniquesolarsizing"
                       className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 text-xs font-mono focus:border-cyan-500 focus:outline-none"
                     />
                     <p className="text-[11px] text-slate-400 leading-relaxed">

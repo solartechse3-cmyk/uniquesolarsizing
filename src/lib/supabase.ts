@@ -1649,7 +1649,8 @@ export const DEFAULT_APP_BRANDING: AppBranding = {
   appName: 'SOLAR PRO',
   appSubtitle: 'Engineering Suite',
   appVersion: 'v2.5',
-  logoUrl: ''
+  logoUrl: '',
+  customAppUrl: 'https://solartechse3-cmyk.github.io/uniquesolarsizing'
 };
 
 /**

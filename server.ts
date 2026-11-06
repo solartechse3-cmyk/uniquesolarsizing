@@ -685,16 +685,14 @@ app.get("/api/data-all", (req, res) => {
 // LICENSE GENERATOR & MULTI-DEVICE ACTIVATION ENDPOINTS
 // ----------------------------------------------------
 
-// Resolves public / shared URL (or user custom domain e.g. GitHub Pages) and prevents private -dev- URLs
+// Resolves public / shared URL (defaults to user's VPN-free GitHub Pages domain)
 function getPublicAppUrl(): string {
   const custom = memoryStorage["app_branding"]?.customAppUrl || memoryStorage["admin_contact"]?.customAppUrl;
   if (custom && typeof custom === 'string' && custom.trim().startsWith('http')) {
     return custom.trim().replace(/\/+$/, '');
   }
-  if (process.env.APP_URL && !process.env.APP_URL.includes('-dev-')) {
-    return process.env.APP_URL.replace(/\/+$/, '');
-  }
-  return 'https://ais-pre-njtt3jg6zqy2xt5loyhhsc-14421401711.asia-northeast1.run.app';
+  // 100% VPN-free GitHub Pages domain for this repository
+  return 'https://solartechse3-cmyk.github.io/uniquesolarsizing';
 }
 
 async function autoSyncLicenseToGoogleSheet(lic: any) {
@@ -1249,12 +1247,12 @@ async function handleTelegramIncomingMessage(cfg: any, msg: any) {
 ⏳ <b>သက်တမ်း:</b> ${durLabel}
 📱 <b>ခွင့်ပြုစက်:</b> ${newLic.deviceLimit} Device(s)
 
-🔑 <b>License Key (VPN မလိုဘဲ Activate လုပ်ရန်):</b>
-<code>${newLic.token}</code>
-<i>👉 VPN မရှိပါက App ရှိ "Enter License Key" နေရာတွင် ဤ Key ကို ကူးထည့်ရုံဖြင့် ချက်ချင်း Activate ဖြစ်ပါသည်!</i>
-
-🔗 <b>One-Click Link (VPN ရှိပါက တိုက်ရိုက်ဖွင့်ရန်):</b>
+🌐 <b>VPN မလိုဘဲ တိုက်ရိုက်ဖွင့်ရန် (One-Click Link):</b>
 ${activationLink}
+
+🔑 <b>License Key:</b>
+<code>${newLic.token}</code>
+<i>👉 အကယ်၍ Link မဖွင့်ချင်ပါက App ၏ "Enter License Key" တွင် ဤ Key ကို ကူးထည့်ရုံဖြင့်လည်း VPN မလိုဘဲ Activate ဖြစ်ပါသည်!</i>
 ━━━━━━━━━━━━━━━━━
 <i>(ဝယ်ယူသူထံ ဤစာတိုကို တိုက်ရိုက် Forward ပို့ပေးလိုက်ရုံဖြင့် အလွယ်တကူ Activate ပြုလုပ်နိုင်ပါသည်)</i>`;
 

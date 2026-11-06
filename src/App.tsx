@@ -1037,7 +1037,7 @@ export default function App() {
       const saved = localStorage.getItem('solar_sizer_app_branding_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') return parsed;
+        if (parsed && typeof parsed === 'object') return { ...DEFAULT_APP_BRANDING, ...parsed };
       }
     } catch (e) {}
     return DEFAULT_APP_BRANDING;
