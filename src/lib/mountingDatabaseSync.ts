@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import { MountingDatabase, MountingPanelItem, RoofComponentItem, GroundComponentItem } from '../types';
 import { INITIAL_MOUNTING_DATABASE } from '../data/mountingDatabaseDefaults';
+import { initSupabase } from './supabase';
 
 const STORAGE_MOUNTING_DB_KEY = 'solar_mounting_database_v1';
 
@@ -427,6 +428,16 @@ export function getInitialMountingDatabase(): MountingDatabase {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.panels) && parsed.panels.length > 0) {
+        if (parsed.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(parsed.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) {
+            parsed.panels = [...parsed.panels, ...missing];
+            try {
+              localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(parsed));
+            } catch (e) {}
+          }
+        }
         return parsed;
       }
     }
@@ -435,7 +446,7 @@ export function getInitialMountingDatabase(): MountingDatabase {
 }
 
 /**
- * Fetch Mounting Database from Express Server / LocalStorage
+ * Fetch Mounting Database from Express Server / Static JSON / Supabase Cloud / LocalStorage
  */
 export async function fetchMountingDatabaseFromCloud(): Promise<{ db: MountingDatabase; source: 'cloud' | 'local' }> {
   // 1. Try Server API first
@@ -444,6 +455,11 @@ export async function fetchMountingDatabaseFromCloud(): Promise<{ db: MountingDa
     if (res.ok) {
       const json = await res.json();
       if (json.success && json.data && json.data.panels && Array.isArray(json.data.panels)) {
+        if (json.data.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(json.data.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) json.data.panels = [...json.data.panels, ...missing];
+        }
         try {
           localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(json.data));
         } catch (e) {}
@@ -452,23 +468,93 @@ export async function fetchMountingDatabaseFromCloud(): Promise<{ db: MountingDa
     }
   } catch (err) {}
 
-  // 2. Try LocalStorage
+  // 2. Try static data file from GitHub Pages
+  try {
+    const staticRes = await fetch('./data/mounting_database.json', { cache: 'no-store' }).catch(() => 
+      fetch('/data/mounting_database.json', { cache: 'no-store' })
+    );
+    if (staticRes && staticRes.ok) {
+      const staticJson = await staticRes.json();
+      if (staticJson && Array.isArray(staticJson.panels) && staticJson.panels.length > 0) {
+        if (staticJson.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(staticJson.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) staticJson.panels = [...staticJson.panels, ...missing];
+        }
+        try {
+          localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(staticJson));
+        } catch (e) {}
+        return { db: staticJson, source: 'cloud' };
+      }
+    }
+  } catch (e) {}
+
+  // 3. Try Supabase Cloud Database
+  const supabase = initSupabase();
+  if (supabase) {
+    try {
+      const { data: d1 } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('id', 'mounting_database')
+        .maybeSingle();
+
+      if (d1?.value && typeof d1.value === 'object' && Array.isArray(d1.value.panels) && d1.value.panels.length > 0) {
+        const val = d1.value;
+        if (val.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(val.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) val.panels = [...val.panels, ...missing];
+        }
+        try {
+          localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(val));
+        } catch (e) {}
+        return { db: val, source: 'cloud' };
+      }
+
+      const { data: d2 } = await supabase
+        .from('solar_app_data')
+        .select('data')
+        .eq('key', 'mounting_database')
+        .maybeSingle();
+
+      if (d2?.data && typeof d2.data === 'object' && Array.isArray(d2.data.panels) && d2.data.panels.length > 0) {
+        const val = d2.data;
+        if (val.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(val.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) val.panels = [...val.panels, ...missing];
+        }
+        try {
+          localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(val));
+        } catch (e) {}
+        return { db: val, source: 'cloud' };
+      }
+    } catch (e) {}
+  }
+
+  // 4. Try LocalStorage
   try {
     const raw = localStorage.getItem(STORAGE_MOUNTING_DB_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.panels)) {
+      if (parsed && Array.isArray(parsed.panels) && parsed.panels.length > 0) {
+        if (parsed.panels.length < INITIAL_MOUNTING_DATABASE.panels.length) {
+          const existingIds = new Set(parsed.panels.map((p: any) => p.id));
+          const missing = INITIAL_MOUNTING_DATABASE.panels.filter(p => !existingIds.has(p.id));
+          if (missing.length > 0) parsed.panels = [...parsed.panels, ...missing];
+        }
         return { db: parsed, source: 'local' };
       }
     }
   } catch (e) {}
 
-  // 3. Fallback to Initial Default Mounting Database
+  // 5. Fallback to Initial Default Mounting Database
   return { db: INITIAL_MOUNTING_DATABASE, source: 'local' };
 }
 
 /**
- * Publish Database Online for all users across the web
+ * Publish Database Online for all users across the web (Server + Supabase Cloud + GitHub Pages)
  */
 export async function publishMountingDatabaseToCloud(
   database: MountingDatabase,
@@ -486,41 +572,74 @@ export async function publishMountingDatabaseToCloud(
     localStorage.setItem(STORAGE_MOUNTING_DB_KEY, JSON.stringify(updatedDb));
   } catch (e) {}
 
-  // 2. Post to central Express backend (saves to disk in data/app_storage.json and broadcasts to all clients)
+  // 2. Post to central Express backend (saves to disk in data/app_storage.json, writes static docs/ files, and broadcasts SSE)
   try {
-    const res = await fetch('/api/data/mounting_database', {
+    await fetch('/api/data/mounting_database', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: updatedDb })
-    });
+    }).catch(() => {});
+  } catch (err) {}
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      return { success: false, error: errJson.error || 'Server rejected database publish', timestamp: updatedDb.lastUpdated };
-    }
+  // 3. Persist to Supabase Cloud for all remote users (including GitHub Pages)
+  const supabase = initSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from('app_settings')
+        .upsert({
+          id: 'mounting_database',
+          value: updatedDb,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
 
-    // Also notify local browser tabs
-    if (typeof BroadcastChannel !== 'undefined') {
-      try {
-        const bc = new BroadcastChannel('solar_mounting_db_sync');
-        bc.postMessage({ type: 'MOUNTING_DB_PUBLISHED', data: updatedDb, timestamp: Date.now() });
-        setTimeout(() => bc.close(), 1000);
-      } catch (e) {}
-    }
+    try {
+      await supabase
+        .from('solar_app_data')
+        .upsert({
+          key: 'mounting_database',
+          data: updatedDb,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+    } catch (e) {}
 
-    return { success: true, timestamp: updatedDb.lastUpdated };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Network error publishing database', timestamp: updatedDb.lastUpdated };
+    // Realtime broadcast via Supabase channel to all GitHub Pages and web users
+    try {
+      const liveChannel = supabase.channel('solar_mounting_db_sync');
+      liveChannel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          liveChannel.send({
+            type: 'broadcast',
+            event: 'mounting_db_published',
+            payload: { data: updatedDb, timestamp: Date.now() }
+          });
+          setTimeout(() => liveChannel.unsubscribe(), 2000);
+        }
+      });
+    } catch (err) {}
   }
+
+  // 4. Notify local browser tabs
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const bc = new BroadcastChannel('solar_mounting_db_sync');
+      bc.postMessage({ type: 'MOUNTING_DB_PUBLISHED', data: updatedDb, timestamp: Date.now() });
+      setTimeout(() => bc.close(), 1000);
+    } catch (e) {}
+  }
+
+  return { success: true, timestamp: updatedDb.lastUpdated };
 }
 
 /**
- * Subscribe to real-time updates from other admin sessions
+ * Subscribe to real-time updates from other admin sessions (SSE, Supabase Realtime, BroadcastChannel)
  */
 export function subscribeToMountingDatabaseUpdates(onUpdate: (db: MountingDatabase) => void): () => void {
   let isCleanedUp = false;
   let eventSource: EventSource | null = null;
   let broadcastChannel: BroadcastChannel | null = null;
+  let supabaseChannel: any = null;
 
   // 1. Listen via Server-Sent Events (SSE)
   if (typeof EventSource !== 'undefined') {
@@ -538,7 +657,22 @@ export function subscribeToMountingDatabaseUpdates(onUpdate: (db: MountingDataba
     } catch (e) {}
   }
 
-  // 2. Listen via BroadcastChannel across local tabs
+  // 2. Listen via Supabase Realtime (critical for GitHub Pages users!)
+  const supabase = initSupabase();
+  if (supabase) {
+    try {
+      supabaseChannel = supabase.channel('solar_mounting_db_sync');
+      supabaseChannel
+        .on('broadcast', { event: 'mounting_db_published' }, (payload: any) => {
+          if (!isCleanedUp && payload?.payload?.data) {
+            onUpdate(payload.payload.data);
+          }
+        })
+        .subscribe();
+    } catch (e) {}
+  }
+
+  // 3. Listen via BroadcastChannel across local tabs
   if (typeof BroadcastChannel !== 'undefined') {
     try {
       broadcastChannel = new BroadcastChannel('solar_mounting_db_sync');
@@ -555,5 +689,6 @@ export function subscribeToMountingDatabaseUpdates(onUpdate: (db: MountingDataba
     isCleanedUp = true;
     if (eventSource) eventSource.close();
     if (broadcastChannel) broadcastChannel.close();
+    if (supabaseChannel) supabaseChannel.unsubscribe();
   };
 }

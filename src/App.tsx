@@ -79,6 +79,7 @@ import { MountingDatabaseModal } from './components/MountingDatabaseModal';
 import {
   getInitialMountingDatabase,
   fetchMountingDatabaseFromCloud,
+  publishMountingDatabaseToCloud,
   subscribeToMountingDatabaseUpdates
 } from './lib/mountingDatabaseSync';
 import { 
@@ -1424,6 +1425,21 @@ export default function App() {
         if (payload.batteries && Array.isArray(payload.batteries)) setCustomBatteries(payload.batteries);
         if (payload.mountingDatabase) setMountingDatabase(payload.mountingDatabase);
         if (payload.adminContact) setAdminContact(payload.adminContact);
+
+        // Proactively refresh from Supabase Cloud / static storage
+        fetchMountingDatabaseFromCloud().then(m => {
+          if (isMounted && m?.db?.panels?.length) setMountingDatabase(m.db);
+        }).catch(() => {});
+        fetchCustomPanelsFromCloud().then(p => {
+          if (isMounted && p?.panels?.length) setCustomPanels(ensureUniquePanelIds(p.panels));
+        }).catch(() => {});
+        fetchCustomInvertersFromCloud().then(i => {
+          if (isMounted && i?.inverters?.length) setCustomInverters(i.inverters);
+        }).catch(() => {});
+        fetchAdminContactFromCloud().then(c => {
+          if (isMounted && c) setAdminContact(c);
+        }).catch(() => {});
+
         setStatusMsg({
           text: lang === 'my' 
             ? '🚀 Admin မှ စနစ်နှင့် ဒေတာများကို တိုက်ရိုက် ထုတ်ဝေလိုက်ပါပြီ! (Live Update Received)' 
@@ -2034,6 +2050,18 @@ export default function App() {
   };
 
   const handlePublishLiveUpdate = async (note?: string) => {
+    try {
+      await publishMountingDatabaseToCloud(mountingDatabase, 'Admin');
+    } catch (e) {}
+    try {
+      await saveCustomPanelsToCloud(customPanels);
+    } catch (e) {}
+    try {
+      await saveCustomInvertersToCloud(customInverters);
+    } catch (e) {}
+    try {
+      await saveAdminContactToCloud(adminContact);
+    } catch (e) {}
     const res = await publishLiveSystemUpdate(note);
     return res;
   };

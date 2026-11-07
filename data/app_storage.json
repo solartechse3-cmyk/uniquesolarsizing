@@ -432,13 +432,13 @@
     }
   ],
   "mounting_database": {
-    "version": "2026.1",
-    "lastUpdated": "2026-11-04T13:12:08.568Z",
-    "publishedBy": "SolarTech Engineering Division (Admin)",
+    "version": "2026.2",
+    "lastUpdated": "2026-11-07T14:09:16.275Z",
+    "publishedBy": "Verified Admin (Published Live)",
     "isOnlineLive": true,
     "panels": [
       {
-        "id": "panel_longi_585",
+        "id": "panel_longi_585_himo6",
         "brand": "Longi Solar",
         "model": "Hi-MO 6 Explorer LR5-72HTH-585M",
         "watt": 585,
@@ -455,7 +455,7 @@
         "priceMmk": 285000
       },
       {
-        "id": "panel_jinko_585",
+        "id": "panel_jinko_585_tiger_neo",
         "brand": "Jinko Solar",
         "model": "Tiger Neo N-Type JKM585N-72HL4-V",
         "watt": 585,
@@ -463,7 +463,7 @@
         "widthMm": 1134,
         "thicknessMm": 30,
         "weightKg": 28,
-        "cellType": "TOPCon Bifacial",
+        "cellType": "TOPCon Dual-Glass Bifacial",
         "voc": 51.9,
         "vmp": 43.8,
         "imp": 13.36,
@@ -472,7 +472,7 @@
         "priceMmk": 290000
       },
       {
-        "id": "panel_ja_575",
+        "id": "panel_ja_575_deepblue",
         "brand": "JA Solar",
         "model": "DeepBlue 4.0 Pro JAM72D40-575/GB",
         "watt": 575,
@@ -489,7 +489,7 @@
         "priceMmk": 275000
       },
       {
-        "id": "panel_trina_580",
+        "id": "panel_trina_580_vertex",
         "brand": "Trina Solar",
         "model": "Vertex TSM-DEG19RC.20-580W",
         "watt": 580,
@@ -506,7 +506,7 @@
         "priceMmk": 280000
       },
       {
-        "id": "panel_canadian_550",
+        "id": "panel_canadian_550_hiku6",
         "brand": "Canadian Solar",
         "model": "HiKu6 CS6W-550MS Mono-PERC",
         "watt": 550,
@@ -523,9 +523,9 @@
         "priceMmk": 260000
       },
       {
-        "id": "panel_trina_670",
+        "id": "panel_trina_670_ultra",
         "brand": "Trina Solar",
-        "model": "Vertex TSM-DEG21C.20 670W Ultra",
+        "model": "Vertex TSM-DEG21C.20 670W Ultra High Power",
         "watt": 670,
         "lengthMm": 2384,
         "widthMm": 1303,
@@ -538,6 +538,40 @@
         "isc": 18.62,
         "efficiency": 21.6,
         "priceMmk": 340000
+      },
+      {
+        "id": "panel_astronergy_450_chsm54",
+        "brand": "Astronergy",
+        "model": "Astro 5 Semi CHSM54N-HC-450W (Lightweight)",
+        "watt": 450,
+        "lengthMm": 1762,
+        "widthMm": 1134,
+        "thicknessMm": 30,
+        "weightKg": 21.5,
+        "cellType": "TOPCon Residential",
+        "voc": 38.9,
+        "vmp": 32.7,
+        "imp": 13.76,
+        "isc": 14.54,
+        "efficiency": 22.5,
+        "priceMmk": 225000
+      },
+      {
+        "id": "panel_risen_410_titans",
+        "brand": "Risen Solar",
+        "model": "Titan S RSM40-8-410M (High Efficiency)",
+        "watt": 410,
+        "lengthMm": 1754,
+        "widthMm": 1096,
+        "thicknessMm": 30,
+        "weightKg": 21,
+        "cellType": "Mono-PERC Half-Cut",
+        "voc": 41.9,
+        "vmp": 34.89,
+        "imp": 11.76,
+        "isc": 12.47,
+        "efficiency": 21.3,
+        "priceMmk": 210000
       }
     ],
     "roofComponents": [
@@ -699,39 +733,6 @@
         "unitPrice": 75000,
         "material": "HDG Steel Pile",
         "notes": "Rammed pile"
-      },
-      {
-        "id": "gm_mid_clamp",
-        "nameMy": "ဆိုလာပြားကြားညှပ် Mid Clamp",
-        "nameEn": "Solar Mid Clamp Kit (Ground Mount)",
-        "category": "clamp",
-        "specs": "Aluminum / HDG Clamp + SUS304 Bolt",
-        "unit": "ခု (Pcs)",
-        "unitPrice": 2800,
-        "material": "AL6005-T5 / SUS304",
-        "notes": "Inter-panel clamp"
-      },
-      {
-        "id": "gm_end_clamp",
-        "nameMy": "ဆိုလာပြားအစွန်းညှပ် End Clamp",
-        "nameEn": "Solar End Clamp Kit (Ground Mount)",
-        "category": "clamp",
-        "specs": "Heavy Duty Clamp + SUS304 Bolt",
-        "unit": "ခု (Pcs)",
-        "unitPrice": 3200,
-        "material": "AL6005-T5 / SUS304",
-        "notes": "Array edge clamp"
-      },
-      {
-        "id": "gm_hardware_pack",
-        "nameMy": "တပ်ဆင်ရေး မူလီ၊ နတ်နှင့် ချိတ်ဆက်ပြား အစုံထုပ်",
-        "nameEn": "Structural Fastener & Hardware Pack",
-        "category": "hardware",
-        "specs": "Grade 8.8 HDG M10/M12 Bolts + Gussets",
-        "unit": "ထုပ် (Packs)",
-        "unitPrice": 35000,
-        "material": "HDG Grade 8.8 Steel",
-        "notes": "Assembly spares"
       }
     ]
   },
