@@ -701,9 +701,13 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = ensureUniquePanelIds(parsed);
-          try { localStorage.setItem('solar_sizer_custom_panels_v3', JSON.stringify(sanitized)); } catch (e) {}
-          return sanitized;
+          // If saved only has the old 585W default list and none of the new 5 models, auto-upgrade to DEFAULT_PANEL_PRESETS
+          const isOldDefaultOnly = parsed.some(p => p.id === 'panel_jinko_585_tiger_neo' || p.name?.includes('585W')) && !parsed.some(p => p.name?.includes('615W') || p.name?.includes('SharkTopSun'));
+          if (!isOldDefaultOnly) {
+            const sanitized = ensureUniquePanelIds(parsed);
+            try { localStorage.setItem('solar_sizer_custom_panels_v3', JSON.stringify(sanitized)); } catch (e) {}
+            return sanitized;
+          }
         }
       }
       return DEFAULT_PANEL_PRESETS;
@@ -754,11 +758,14 @@ export default function App() {
       if (saved) {
         const list = JSON.parse(saved);
         if (Array.isArray(list) && list.length > 0) {
-          return list[0].id;
+          const isOldDefaultOnly = list.some((p: any) => p.id === 'panel_jinko_585_tiger_neo' || p.name?.includes('585W')) && !list.some((p: any) => p.name?.includes('615W') || p.name?.includes('SharkTopSun'));
+          if (!isOldDefaultOnly) {
+            return list[0].id;
+          }
         }
       }
     } catch (e) {}
-    return 'custom';
+    return DEFAULT_PANEL_PRESETS[0]?.id || 'custom';
   });
 
   // Custom current manual inverter inputs form state

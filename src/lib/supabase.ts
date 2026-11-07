@@ -1097,13 +1097,17 @@ export async function fetchCustomPanelsFromCloud(): Promise<{ panels: PanelPrese
     } catch (e) {}
   }
 
-  // 4. Fallback to local storage
+  // 4. Fallback to local storage (sanitizing obsolete cached defaults)
   try {
     const raw = localStorage.getItem(STORAGE_CUSTOM_PANELS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return { panels: parsed, source: 'local' };
+        // If it only contains the old 585W default list and none of the new 5 models, use DEFAULT_PANEL_PRESETS
+        const isOldDefaultOnly = parsed.some((p: any) => p.id === 'panel_jinko_585_tiger_neo' || p.name?.includes('585W')) && !parsed.some((p: any) => p.name?.includes('615W') || p.name?.includes('SharkTopSun'));
+        if (!isOldDefaultOnly) {
+          return { panels: parsed, source: 'local' };
+        }
       }
     }
   } catch (e) {}
