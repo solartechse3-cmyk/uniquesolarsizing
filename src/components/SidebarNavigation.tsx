@@ -76,7 +76,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 }) => {
   const isLicenseValid = Boolean(activeLicense && activeLicense.status === 'active' && new Date(activeLicense.expiresAt).getTime() > Date.now());
   const isPaid = isLicenseValid || isSubscriptionActive(currentPaymentRecord);
-  const isExpired = !isLicenseValid && (isSubscriptionExpired(currentPaymentRecord) || (activeLicense && activeLicense.status === 'expired'));
+  const isLicenseExpired = Boolean(activeLicense && (activeLicense.status === 'expired' || new Date(activeLicense.expiresAt).getTime() <= Date.now()));
+  const isExpired = !isLicenseValid && (isLicenseExpired || isSubscriptionExpired(currentPaymentRecord));
 
   const menuItems = [
     {
@@ -84,13 +85,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       labelEn: 'Solar String Sizer',
       labelMy: 'ဆိုလာပြား စတြင်း တွက်စက်',
       labelZh: '光伏组串配比计算器',
-      subtextEn: 'MPPT & Voltage Thresholds',
-      subtextMy: 'ဗို့အားနှင့် MPPT အချိုးအစား',
-      subtextZh: 'MPPT与电压耐压阈值计算',
-      icon: Layers,
+      subtextEn: isPaid ? 'MPPT & Voltage Thresholds' : 'PRO Package Locked',
+      subtextMy: isPaid ? 'ဗို့အားနှင့် MPPT အချိုးအစား' : 'PRO Package လိုအပ်ပါသည်',
+      subtextZh: isPaid ? 'MPPT与电压耐压阈值计算' : 'PRO 会员专享功能',
+      icon: isPaid ? Layers : Lock,
       type: 'nav' as const,
-      badge: 'MPPT',
-      badgeColor: 'bg-amber-500/20 text-amber-300'
+      badge: isPaid ? 'MPPT' : 'PRO',
+      badgeColor: isPaid ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
     },
     {
       id: 'mounting_calc' as const,
@@ -188,34 +189,27 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     }
   ];
 
-  const [logoError, setLogoError] = React.useState(false);
-
-  React.useEffect(() => {
-    setLogoError(false);
-  }, [appBranding?.logoUrl]);
-
   const sidebarContent = (
     <div className="flex flex-col h-full bg-[#0d1527] text-slate-200 select-none">
       {/* Brand Header */}
       <div className="p-5 pb-4 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {appBranding?.logoUrl && !logoError ? (
-            <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 p-1 flex items-center justify-center shadow-md overflow-hidden shrink-0">
-              <img 
-                src={appBranding.logoUrl} 
-                alt={appBranding.appName || "App Logo"} 
-                className="w-full h-full object-contain"
-                onError={() => setLogoError(true)}
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 ring-2 ring-amber-500/30 overflow-hidden shrink-0">
-              <Zap className="w-5 h-5 text-slate-950 fill-slate-950" />
-            </div>
-          )}
+          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 p-1 flex items-center justify-center shadow-md overflow-hidden shrink-0">
+            <img 
+              src={appBranding?.logoUrl || './logo.png'} 
+              alt={appBranding?.appName || "UNIQUE SOLAR PRO"} 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith('/logo.png')) {
+                  target.src = './logo.png';
+                }
+              }}
+            />
+          </div>
           <div className="min-w-0">
             <div className="font-extrabold text-white text-base tracking-wide flex items-center gap-1.5 truncate">
-              <span className="truncate">{appBranding?.appName || 'SOLAR PRO'}</span>
+              <span className="truncate">{appBranding?.appName || 'UNIQUE SOLAR PRO'}</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 shrink-0">
                 {appBranding?.appVersion || 'v2.5'}
               </span>
@@ -449,10 +443,10 @@ const SidebarSubscriptionCard: React.FC<SidebarSubscriptionCardProps> = ({
   const subInfo = useSubscriptionCountdown(expiryDate, lang);
 
   const contact = adminContact || {
-    viberPhone: '09 798 123 456',
-    viberUrl: 'viber://chat?number=09798123456',
-    telegramUsername: 'solartechadmin',
-    telegramUrl: 'https://t.me/solartechadmin'
+    viberPhone: '09 403 708 145',
+    viberUrl: 'viber://chat?number=09403708145',
+    telegramUsername: 'uniquesolarpro',
+    telegramUrl: 'https://t.me/uniquesolarpro'
   };
 
   if (isPaid) {

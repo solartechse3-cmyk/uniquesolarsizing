@@ -121,28 +121,49 @@ export const ViberTelegramPurchaseBanner: React.FC<ViberTelegramPurchaseBannerPr
     }
   }
 
+  const isLicenseActive = Boolean(
+    activeLicense && 
+    activeLicense.status === 'active' && 
+    new Date(activeLicense.expiresAt).getTime() > Date.now()
+  );
+  const isLicenseExpired = Boolean(
+    activeLicense && 
+    (activeLicense.status === 'expired' || new Date(activeLicense.expiresAt).getTime() <= Date.now())
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2" id="viber-telegram-purchase-section">
       <div className={`rounded-2xl border transition-all duration-300 shadow-sm overflow-hidden ${
-        theme === 'dark'
-          ? 'bg-gradient-to-r from-slate-900 via-slate-900 to-[#0e1628] border-slate-800'
-          : 'bg-gradient-to-r from-white via-slate-50 to-amber-50/30 border-slate-200'
+        isLicenseExpired
+          ? (theme === 'dark' ? 'bg-gradient-to-r from-rose-950/40 via-slate-900 to-[#180e14] border-rose-500/30' : 'bg-gradient-to-r from-rose-50 via-white to-amber-50/20 border-rose-200')
+          : (theme === 'dark'
+              ? 'bg-gradient-to-r from-slate-900 via-slate-900 to-[#0e1628] border-slate-800'
+              : 'bg-gradient-to-r from-white via-slate-50 to-amber-50/30 border-slate-200')
       }`}>
         {/* Banner Top Strip */}
         <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shrink-0 ${
+              isLicenseExpired
+                ? 'bg-gradient-to-tr from-rose-600 to-amber-600 shadow-rose-500/20'
+                : 'bg-gradient-to-tr from-purple-600 to-indigo-600 shadow-purple-500/20'
+            }`}>
+              {isLicenseExpired ? <AlertCircle className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>{lang === 'my' ? 'Solar Pro Engineering Suite (Paid Version)' : 'Solar Pro Engineering Suite (PRO Version)'}</span>
+                  <span>{lang === 'my' ? 'UNIQUE SOLAR PRO (Engineering Suite)' : 'UNIQUE SOLAR PRO (Engineering Suite)'}</span>
                 </h3>
-                {activeLicense ? (
+                {isLicenseActive ? (
                   <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>PRO ACTIVE: {remainingDays}d {remainingHours}h ({activeLicense.boundDevices?.length || 1}/{activeLicense.deviceLimit} Device)</span>
+                    <span>PRO ACTIVE: {remainingDays}d {remainingHours}h ({activeLicense?.boundDevices?.length || 1}/{activeLicense?.deviceLimit || 1} Device)</span>
+                  </span>
+                ) : isLicenseExpired ? (
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 dark:text-rose-400 border border-rose-500/30 animate-pulse">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{lang === 'my' ? '⚠️ လိုင်စင် သက်တမ်းကုန်ဆုံးပါပြီ (EXPIRED)' : '⚠️ PRO LICENSE EXPIRED'}</span>
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
@@ -152,10 +173,14 @@ export const ViberTelegramPurchaseBanner: React.FC<ViberTelegramPurchaseBannerPr
                 )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {activeLicense 
+                {isLicenseActive 
                   ? (lang === 'my' 
-                      ? `လိုင်စင်ဖွင့်ထားပြီးပါပြီ (${activeLicense.customerName})။ Roof Mount BOQ, Ground Mount 3D, DC Breaker & Vault အားလုံး အသုံးပြုနိုင်ပါသည်။` 
-                      : `PRO License is active for ${activeLicense.customerName}. All engineering features are unlocked.`)
+                      ? `လိုင်စင်ဖွင့်ထားပြီးပါပြီ (${activeLicense?.customerName})။ Roof Mount BOQ, Ground Mount 3D, DC Breaker & Vault အားလုံး အသုံးပြုနိုင်ပါသည်။` 
+                      : `PRO License is active for ${activeLicense?.customerName}. All engineering features are unlocked.`)
+                  : isLicenseExpired
+                  ? (lang === 'my'
+                      ? 'သင့် PRO လိုင်စင် သက်တမ်းကုန်ဆုံးသွားပါပြီ။ ဆက်လက်အသုံးပြုလိုပါက Viber သို့မဟုတ် Telegram တွင် License Key အသစ် ထပ်မံဝယ်ယူ အသက်သွင်းပေးပါခင်ဗျာ။'
+                      : 'Your PRO license has expired. Please buy a new license key via Viber or Telegram to renew.')
                   : (adminContact.noteMy || 'Viber သို့မဟုတ် Telegram တွင် ဆက်သွယ်၍ 1 Week, 1 Month, 3 Months PRO License Link ရယူနိုင်ပါသည်')}
               </p>
             </div>
@@ -250,7 +275,7 @@ export const ViberTelegramPurchaseBanner: React.FC<ViberTelegramPurchaseBannerPr
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Viber Phone Number</span>
                           <span className="font-mono font-black text-sm sm:text-base text-slate-900 dark:text-white tracking-wider">
-                            {adminContact.viberPhone || '09 798 123 456'}
+                            {adminContact.viberPhone || '09 403 708 145'}
                           </span>
                         </div>
                       </div>
@@ -330,7 +355,7 @@ export const ViberTelegramPurchaseBanner: React.FC<ViberTelegramPurchaseBannerPr
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 block">Telegram Username</span>
                           <span className="font-mono font-black text-sm sm:text-base text-slate-900 dark:text-white tracking-wider">
-                            @{tgUser || 'solartechadmin'}
+                            @{tgUser || 'UniqueSolarPro'}
                           </span>
                         </div>
                       </div>

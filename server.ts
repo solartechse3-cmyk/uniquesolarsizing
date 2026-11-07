@@ -348,10 +348,11 @@ const DEFAULT_INITIAL_PAYMENT_CONFIG = {
 };
 
 const DEFAULT_INITIAL_ADMIN_CONTACT = {
-  viberPhone: "09 798 123 456",
-  viberUrl: "viber://chat?number=09798123456",
-  telegramUsername: "solartechadmin",
-  telegramUrl: "https://t.me/solartechadmin",
+  viberPhone: "09 403 708 145",
+  viberUrl: "viber://chat?number=09403708145",
+  telegramUsername: "uniquesolarpro",
+  telegramUrl: "https://t.me/uniquesolarpro",
+  customAppUrl: "https://solartechse3-cmyk.github.io/uniquesolarsizing",
   noteMy: "Viber သို့မဟုတ် Telegram တွင် ဆက်သွယ်၍ 1 Week, 1 Month, 3 Months PRO License Link ရယူနိုင်ပါသည်",
   noteEn: "Contact via Viber or Telegram to purchase 1 Week, 1 Month, 3 Months PRO License Link"
 };
@@ -1024,6 +1025,76 @@ async function sendTelegramMessage(token: string, chatId: string, text: string, 
   }
 }
 
+async function sendTelegramDocument(token: string, chatId: string, filename: string, content: string, caption?: string) {
+  if (!token || !chatId) return false;
+  try {
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    formData.append('document', blob, filename);
+    if (caption) {
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
+    }
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: 'POST',
+      body: formData,
+      signal: AbortSignal.timeout(15000)
+    });
+    const data: any = await res.json();
+    return !!data.ok;
+  } catch (err) {
+    console.warn('sendTelegramDocument failed:', err);
+    return false;
+  }
+}
+
+function generateLicensesCSV(licenses: any[], appUrl: string): string {
+  const headers = [
+    "No",
+    "Customer Name",
+    "Duration",
+    "Device Limit",
+    "License Key",
+    "Status",
+    "Created Date",
+    "Expires Date",
+    "Active Bound Devices",
+    "Direct Activation Link",
+    "Note"
+  ];
+
+  const escapeCSV = (val: any) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = licenses.map((lic: any, idx: number) => {
+    const boundDevicesStr = Array.isArray(lic.boundDevices) 
+      ? lic.boundDevices.map((d: any) => d.deviceModel || d.deviceId || 'Device').join('; ')
+      : '';
+    const activationLink = `${appUrl}/?license=${lic.token}`;
+
+    return [
+      idx + 1,
+      escapeCSV(lic.customerName || 'Valued Customer'),
+      escapeCSV(lic.duration || '1_month'),
+      escapeCSV(lic.deviceLimit || 1),
+      escapeCSV(lic.token),
+      escapeCSV(lic.status || 'active'),
+      escapeCSV(new Date(lic.createdAt).toLocaleString('en-US')),
+      escapeCSV(new Date(lic.expiresAt).toLocaleDateString('en-US')),
+      escapeCSV(boundDevicesStr),
+      escapeCSV(activationLink),
+      escapeCSV(lic.note || '')
+    ].join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\r\n');
+}
+
 let telegramPollingTimeout: NodeJS.Timeout | null = null;
 let isTelegramPolling = false;
 let isPollingFetchInProgress = false;
@@ -1177,8 +1248,9 @@ async function handleTelegramIncomingMessage(cfg: any, msg: any) {
 • <code>1y</code> = 1 Year (၃၆၅ ရက်)
 • <code>life</code> = Lifetime (၁၀ နှစ်)
 
-2️⃣ <b>ထုတ်ပြီးသား လိုင်စင်များ ကြည့်ရန်:</b>
-<code>/licenses</code> - နောက်ဆုံး ၅ ခု စာရင်း
+2️⃣ <b>ထုတ်ပြီးသား လိုင်စင်များ ကြည့်ရန် & ဒေါင်းလုဒ် ရယူရန်:</b>
+• <code>/licenses</code> - နောက်ဆုံး ထုတ်ထားသော စာရင်းများ
+• <code>/csv</code> သို့မဟုတ် <code>/export</code> - စာရင်းအားလုံးကို Excel / CSV ဖိုင်ဖြင့် ဒေါင်းလုဒ် ရယူရန်
 
 3️⃣ <b>အခြေအနေ ကြည့်ရန်:</b>
 <code>/stats</code> - စုစုပေါင်း လိုင်စင်နှင့် စက်အရေအတွက်
@@ -1191,6 +1263,34 @@ async function handleTelegramIncomingMessage(cfg: any, msg: any) {
 
   if (cmd === '/id') {
     await sendTelegramMessage(cfg.botToken, chatId, `🆔 သင့် Telegram Chat ID သည်: <code>${chatId}</code> ဖြစ်ပါသည်။`, 'HTML');
+    return;
+  }
+
+  if (cmd === '/export' || cmd === '/csv' || cmd === '/download') {
+    await sendTelegramChatAction(cfg.botToken, chatId, 'upload_document');
+    const list = memoryStorage["licenses"] || [];
+    if (list.length === 0) {
+      await sendTelegramMessage(cfg.botToken, chatId, `📝 ထုတ်ထားသော လိုင်စင် မှတ်တမ်း မရှိသေးပါခင်ဗျာ။ <code>/gen</code> ဖြင့် စတင်ထုတ်နိုင်ပါသည်။`, 'HTML');
+      return;
+    }
+
+    const appUrl = getPublicAppUrl();
+    const csvContent = generateLicensesCSV(list, appUrl);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `Unique_Solar_Pro_Licenses_${dateStr}.csv`;
+
+    const active = list.filter((l: any) => l.status === 'active').length;
+    let boundTotal = 0;
+    list.forEach((l: any) => {
+      if (Array.isArray(l.boundDevices)) boundTotal += l.boundDevices.length;
+    });
+
+    const caption = `📁 <b>PRO LICENSE DATABASE EXPORT (.CSV)</b>\n━━━━━━━━━━━━━━━━━\n🔑 စုစုပေါင်း: <b>${list.length}</b> ခု\n🟢 Active: <b>${active}</b> ခု\n📱 ချိတ်ဆက်စက်: <b>${boundTotal}</b> လုံး\n\n💡 ဤ CSV ဖိုင်အား Excel သို့မဟုတ် Google Sheets တွင် တိုက်ရိုက်ဖွင့်၍ ဖုန်း သို့မဟုတ် ကွန်ပျူတာတွင် အလွယ်တကူ သိမ်းဆည်း ကြည့်ရှုနိုင်ပါသည်!`;
+
+    const sent = await sendTelegramDocument(cfg.botToken, chatId, filename, csvContent, caption);
+    if (!sent) {
+      await sendTelegramMessage(cfg.botToken, chatId, `⚠️ CSV Document ပေးပို့ရာတွင် အခက်အခဲရှိပါက <code>/licenses</code> ဖြင့် စာရင်း ကြည့်ရှုနိုင်ပါသည်။`, 'HTML');
+    }
     return;
   }
 
@@ -1266,13 +1366,14 @@ ${activationLink}
       await sendTelegramMessage(cfg.botToken, chatId, `📝 ထုတ်ထားသော လိုင်စင် မရှိသေးပါခင်ဗျာ။ <code>/gen</code> ဖြင့် စတင်ထုတ်နိုင်ပါသည်။`, 'HTML');
       return;
     }
-    const recent = list.slice(0, 5);
-    let reply = `📋 <b>နောက်ဆုံး ထုတ်လုပ်ထားသော လိုင်စင် ၅ ခု:</b>\n━━━━━━━━━━━━━━━━━\n`;
+    const recent = list.slice(0, 10);
+    let reply = `📋 <b>နောက်ဆုံး ထုတ်လုပ်ထားသော လိုင်စင်များ (စုစုပေါင်း ${list.length} ခု အနက် ${recent.length} ခု):</b>\n━━━━━━━━━━━━━━━━━\n`;
     recent.forEach((lic: any, idx: number) => {
       const boundCount = lic.boundDevices ? lic.boundDevices.length : 0;
       const statusIcon = lic.status === 'active' ? (boundCount > 0 ? '🟢' : '🟡') : '🔴';
       reply += `${idx + 1}. ${statusIcon} <b>${lic.customerName}</b> (${lic.duration})\n   🔑 <code>${lic.token}</code>\n   📱 Active: ${boundCount}/${lic.deviceLimit} Devices\n\n`;
     });
+    reply += `━━━━━━━━━━━━━━━━━\n💾 <b>စာရင်းအားလုံးကို Excel / CSV ဖိုင်ဖြင့် ဒေါင်းလုဒ် ရယူရန်:</b>\n<code>/csv</code> သို့မဟုတ် <code>/export</code> ဟု ရိုက်ပို့နိုင်ပါသည်ခင်ဗျာ!`;
     await sendTelegramMessage(cfg.botToken, chatId, reply, 'HTML');
     return;
   }

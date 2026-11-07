@@ -1646,10 +1646,10 @@ export async function fetchSpecRequestsFromCloud(
 export const STORAGE_APP_BRANDING_KEY = 'solar_sizer_app_branding_v1';
 
 export const DEFAULT_APP_BRANDING: AppBranding = {
-  appName: 'SOLAR PRO',
+  appName: 'UNIQUE SOLAR PRO',
   appSubtitle: 'Engineering Suite',
   appVersion: 'v2.5',
-  logoUrl: '',
+  logoUrl: './logo.png',
   customAppUrl: 'https://solartechse3-cmyk.github.io/uniquesolarsizing'
 };
 
@@ -1948,10 +1948,11 @@ export async function importFullDatabaseBackup(backup: FullDatabaseBackup): Prom
 // ----------------------------------------------------
 
 export const DEFAULT_ADMIN_CONTACT: AdminContactConfig = {
-  viberPhone: "09 798 123 456",
-  viberUrl: "viber://chat?number=09798123456",
-  telegramUsername: "solartechadmin",
-  telegramUrl: "https://t.me/solartechadmin",
+  viberPhone: "09 403 708 145",
+  viberUrl: "viber://chat?number=09403708145",
+  telegramUsername: "uniquesolarpro",
+  telegramUrl: "https://t.me/uniquesolarpro",
+  customAppUrl: "https://solartechse3-cmyk.github.io/uniquesolarsizing",
   noteMy: "Viber သို့မဟုတ် Telegram တွင် ဆက်သွယ်၍ 1 Week, 1 Month, 3 Months PRO License Link ရယူနိုင်ပါသည်",
   noteEn: "Contact via Viber or Telegram to purchase 1 Week, 1 Month, 3 Months PRO License Link"
 };
@@ -2010,15 +2011,28 @@ export async function fetchAdminContactFromCloud(): Promise<AdminContactConfig> 
   const supabase = initSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase
+      const { data: d1 } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('id', 'admin_contact_config')
+        .maybeSingle();
+
+      if (d1?.value && typeof d1.value === 'object') {
+        cached = { ...cached, ...d1.value };
+        try { localStorage.setItem(STORAGE_ADMIN_CONTACT_KEY, JSON.stringify(cached)); } catch (e) {}
+        return cached;
+      }
+
+      const { data: d2 } = await supabase
         .from('solar_app_data')
         .select('data')
         .eq('key', 'admin_contact')
         .maybeSingle();
 
-      if (!error && data?.data) {
-        cached = { ...cached, ...data.data };
+      if (d2?.data && typeof d2.data === 'object') {
+        cached = { ...cached, ...d2.data };
         try { localStorage.setItem(STORAGE_ADMIN_CONTACT_KEY, JSON.stringify(cached)); } catch (e) {}
+        return cached;
       }
     } catch (e) {}
   }
@@ -2031,7 +2045,7 @@ export async function saveAdminContactToCloud(contact: AdminContactConfig): Prom
     localStorage.setItem(STORAGE_ADMIN_CONTACT_KEY, JSON.stringify(contact));
   } catch (e) {}
 
-  // Server API
+  // 1. Server API
   try {
     await fetch('/api/admin-contact', {
       method: 'POST',
@@ -2040,9 +2054,19 @@ export async function saveAdminContactToCloud(contact: AdminContactConfig): Prom
     });
   } catch (e) {}
 
-  // Supabase
+  // 2. Supabase Cloud (Store in app_settings and solar_app_data)
   const supabase = initSupabase();
   if (supabase) {
+    try {
+      await supabase
+        .from('app_settings')
+        .upsert({
+          id: 'admin_contact_config',
+          value: contact,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
+
     try {
       await supabase
         .from('solar_app_data')
@@ -2051,6 +2075,20 @@ export async function saveAdminContactToCloud(contact: AdminContactConfig): Prom
           data: contact,
           updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
+    } catch (e) {}
+
+    // 3. Real-time broadcast
+    try {
+      const liveChannel = supabase.channel('solar_global_database_events');
+      liveChannel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          liveChannel.send({
+            type: 'broadcast',
+            event: 'admin_contact_changed',
+            payload: { contact, timestamp: Date.now() }
+          });
+        }
+      });
     } catch (e) {}
   }
 }

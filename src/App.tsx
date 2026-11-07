@@ -898,7 +898,7 @@ export default function App() {
   // Admin Contact Information (Viber / Telegram)
   const [adminContact, setAdminContact] = useState<AdminContactConfig>(() => {
     try {
-      const saved = localStorage.getItem('solar_admin_contact_config_v1');
+      const saved = localStorage.getItem('solar_sizer_admin_contact_v1') || localStorage.getItem('solar_admin_contact_config_v1');
       if (saved) return { ...DEFAULT_ADMIN_CONTACT, ...JSON.parse(saved) };
     } catch (e) {}
     return DEFAULT_ADMIN_CONTACT;
@@ -911,27 +911,23 @@ export default function App() {
 
   const [isPaywallLocked, setIsPaywallLocked] = useState<boolean>(() => {
     try {
-      const cur = localStorage.getItem('solar_sizer_current_record_v2');
-      if (cur) {
-        const rec = JSON.parse(cur);
-        if (rec && rec.status === 'approved') return false;
-      }
-      const activeLic = getStoredActiveLicense();
-      if (activeLic && activeLic.status === 'active' && new Date(activeLic.expiresAt).getTime() > Date.now()) {
-        return false;
-      }
       const saved = localStorage.getItem('solar_sizer_paywall_locked_v2');
-      return saved !== null ? saved === 'true' : false; // Default unlocked or check license
+      return saved !== null ? saved === 'true' : true; // Default locked: requires license
     } catch (e) {
-      return false;
+      return true;
     }
   });
 
-  // Paid user status: verified active license, approved payment record, or paywall manually unlocked by admin
+  // Paid user status: verified active license, approved payment record, or admin login
   const isLicenseActive = Boolean(
     activeLicense && 
     activeLicense.status === 'active' && 
     new Date(activeLicense.expiresAt).getTime() > Date.now()
+  );
+
+  const isLicenseExpired = Boolean(
+    activeLicense && 
+    (activeLicense.status === 'expired' || new Date(activeLicense.expiresAt).getTime() <= Date.now())
   );
 
   const isApprovedAndActive = Boolean(
@@ -940,18 +936,27 @@ export default function App() {
     !isSubscriptionExpired(currentPaymentRecord)
   );
 
-  const isPaidUser = !isPaywallLocked || isLicenseActive || isApprovedAndActive;
+  const isAdminAuthenticated = Boolean(
+    typeof window !== 'undefined' && sessionStorage.getItem('solar_sizer_admin_auth') === 'true'
+  );
+
+  // When expired, strictly locked (prompt to buy new key).
+  // When locked (default): requires active license or approved payment record.
+  // When unlocked by admin: open access unless personally expired.
+  const isPaidUser = isAdminAuthenticated || (!isLicenseExpired && (isLicenseActive || isApprovedAndActive || !isPaywallLocked));
 
   // Auto-detect when active license or subscription expires
   useEffect(() => {
     const checkExpiration = () => {
-      if (activeLicense && activeLicense.status === 'active') {
-        const isExpired = new Date(activeLicense.expiresAt).getTime() <= Date.now();
-        if (isExpired) {
+      if (activeLicense) {
+        const isExp = activeLicense.status === 'expired' || new Date(activeLicense.expiresAt).getTime() <= Date.now();
+        if (isExp && activeLicense.status === 'active') {
+          setActiveLicense(prev => prev ? { ...prev, status: 'expired' } : null);
+          saveStoredActiveLicense({ ...activeLicense, status: 'expired' });
           setStatusMsg({
             text: lang === 'my' 
-              ? '⚠️ သင့် PRO လိုင်စင် သက်တမ်းကုန်ဆုံးသွားပါပြီ။ Admin (Viber/Telegram) ထံတွင် သက်တမ်းတိုးနိုင်ပါသည်။' 
-              : '⚠️ Your PRO license has expired. Please renew via Viber or Telegram.',
+              ? '⚠️ သင့် PRO လိုင်စင် သက်တမ်းကုန်ဆုံးသွားပါပြီ။ ဆက်လက်အသုံးပြုလိုပါက License Key အသစ် ထပ်မံဝယ်ယူပေးပါခင်ဗျာ။' 
+              : '⚠️ Your PRO license has expired. Please purchase a new license key to continue.',
             type: 'error'
           });
         }
@@ -2003,6 +2008,10 @@ export default function App() {
 
   const handleUpdateAdminContact = async (newContact: AdminContactConfig) => {
     setAdminContact(newContact);
+    try {
+      localStorage.setItem('solar_sizer_admin_contact_v1', JSON.stringify(newContact));
+      localStorage.setItem('solar_admin_contact_config_v1', JSON.stringify(newContact));
+    } catch (e) {}
     await saveAdminContactToCloud(newContact);
   };
 
@@ -2879,6 +2888,19 @@ Trina Vertex S+ 430W,51.4,43.2,430,9.96,10.59`;
 
         {/* Solar Panel String Sizer (Formulas 100% untouched) vs Solar Mounting Calculator */}
         {activeNavTab === 'string_sizer' ? (
+          !isPaidUser ? (
+            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-5 w-full max-w-full min-w-0 overflow-hidden">
+              <MountingCalculatorPaywallGate
+                activeTab="string_sizer"
+                lang={lang}
+                theme={theme}
+                adminContact={adminContact}
+                activeLicense={activeLicense}
+                onOpenActivation={() => setShowLicenseModal(true)}
+                onActivateToken={handleActivateLicense}
+              />
+            </div>
+          ) : (
           <>
           {/* Hero section */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
@@ -4285,6 +4307,7 @@ Trina Vertex S+ 430W,51.4,43.2,430,9.96,10.59`;
 
       </main>
       </>
+          )
         ) : (
           <>
             {/* Mounting & Protection Calculator Sub-Navigation Tab Bar */}
@@ -4337,7 +4360,7 @@ Trina Vertex S+ 430W,51.4,43.2,430,9.96,10.59`;
                   adminContact={adminContact}
                   activeLicense={activeLicense}
                   onOpenActivation={() => setShowLicenseModal(true)}
-                  onSwitchToStringSizer={() => handleSelectNavTab('string_sizer')}
+                  onActivateToken={handleActivateLicense}
                 />
               </div>
             ) : activeNavTab === 'mounting_calc' ? (
