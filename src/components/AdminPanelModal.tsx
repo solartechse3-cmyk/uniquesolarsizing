@@ -1486,6 +1486,9 @@ ${lic.token}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="p-3 rounded-xl border border-dashed border-slate-700 bg-slate-900/60 space-y-2 text-center">
                       <span className="text-xs font-bold text-slate-300 block">Inverters CSV Upload</span>
+                      <p className="text-[10px] text-amber-400/90 leading-tight">
+                        (CSV အသစ်တင်လျှင် အရင်စပက်ဟောင်းများ ပျောက်သွားပြီး အသစ်များဖြင့် အစားထိုးပါမည်။ ကိုယ်တိုင်ထည့်ထားသော Manual Items များကိုသာ ထိန်းသိမ်းပေးပါမည်)
+                      </p>
                       <input
                         type="file"
                         accept=".csv"
@@ -1495,8 +1498,18 @@ ${lic.token}
                           try {
                             const list = await parseInvertersFile(file);
                             if (list && list.length > 0 && onUpdateCustomInverters) {
-                              onUpdateCustomInverters([...list, ...customInverters]);
-                              if (onShowToast) onShowToast({ type: 'success', text: `Imported ${list.length} inverters successfully!` });
+                              // Preserve ONLY manual items created by user via Custom Form
+                              const manualInverters = (customInverters || []).filter((inv: any) => 
+                                inv.id?.startsWith('custom_save_') || inv.isManual === true
+                              );
+                              const finalList = [...list, ...manualInverters];
+                              onUpdateCustomInverters(finalList);
+                              if (onShowToast) {
+                                onShowToast({ 
+                                  type: 'success', 
+                                  text: `အရင်စာရင်းဟောင်းများကို အသစ်လဲလှယ်ပြီး Inverter ${list.length} ခု အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ!` 
+                                });
+                              }
                             }
                           } catch (err) {}
                         }}
@@ -1506,6 +1519,9 @@ ${lic.token}
 
                     <div className="p-3 rounded-xl border border-dashed border-slate-700 bg-slate-900/60 space-y-2 text-center">
                       <span className="text-xs font-bold text-slate-300 block">Panels CSV Upload</span>
+                      <p className="text-[10px] text-amber-400/90 leading-tight">
+                        (CSV အသစ်တင်လျှင် အရင်စပက်ဟောင်းများ ပျောက်သွားပြီး အသစ်များဖြင့် အစားထိုးပါမည်။ ကိုယ်တိုင်ထည့်ထားသော Manual Items များကိုသာ ထိန်းသိမ်းပေးပါမည်)
+                      </p>
                       <input
                         type="file"
                         accept=".csv"
@@ -1515,8 +1531,18 @@ ${lic.token}
                           try {
                             const list = await parseSolarPanelsFile(file);
                             if (list && list.length > 0 && onUpdateCustomPanels) {
-                              onUpdateCustomPanels([...list, ...customPanels]);
-                              if (onShowToast) onShowToast({ type: 'success', text: `Imported ${list.length} panels successfully!` });
+                              // Preserve ONLY manual items created by user via Custom Form
+                              const manualPanels = (customPanels || []).filter((p: any) => 
+                                p.id?.startsWith('custom_save_') || p.isManual === true
+                              );
+                              const finalList = [...list, ...manualPanels];
+                              onUpdateCustomPanels(finalList);
+                              if (onShowToast) {
+                                onShowToast({ 
+                                  type: 'success', 
+                                  text: `အရင်စာရင်းဟောင်းများကို အသစ်လဲလှယ်ပြီး Panel ${list.length} ခု အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ!` 
+                                });
+                              }
                             }
                           } catch (err) {}
                         }}

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "panel_jinko_585_tiger_neo",
+    "name": "Jinko Tiger Neo N-Type 585W (JKM585N-72HL4-V)",
+    "watt": 585,
+    "voc": 51.9,
+    "vmp": 43.8,
+    "imp": 13.36,
+    "isc": 14.15
+  },
+  {
+    "id": "panel_longi_580_himo6",
+    "name": "Longi Hi-MO 6 Explorer 580W (LR5-72HTH-580M)",
+    "watt": 580,
+    "voc": 52.06,
+    "vmp": 43.68,
+    "imp": 13.28,
+    "isc": 14.08
+  },
+  {
+    "id": "panel_ja_575_deepblue",
+    "name": "JA Solar DeepBlue 4.0 Pro 575W (JAM72D40-575/GB)",
+    "watt": 575,
+    "voc": 51.5,
+    "vmp": 43.2,
+    "imp": 13.31,
+    "isc": 14.02
+  },
+  {
+    "id": "panel_trina_580_vertex",
+    "name": "Trina Vertex DEG19RC.20 580W (High Current)",
+    "watt": 580,
+    "voc": 38.6,
+    "vmp": 32.2,
+    "imp": 18.01,
+    "isc": 19.12
+  },
+  {
+    "id": "panel_canadian_550_hiku6",
+    "name": "Canadian Solar HiKu6 550W (CS6W-550MS)",
+    "watt": 550,
+    "voc": 49.6,
+    "vmp": 41.7,
+    "imp": 13.19,
+    "isc": 14
+  }
+]

@@ -163,11 +163,11 @@ var DEFAULT_INITIAL_RESOURCES = [
 ];
 var DEFAULT_INITIAL_INVERTERS = [
   {
-    id: "inv_deye_5k_sg04",
+    id: "inv_deye_6k_sg03_lp1",
     brand: "Deye",
-    model: "SUN-5K-SG04LP1-EU (5kW)",
-    kw: 5,
-    maxDcInputWatt: 6500,
+    model: "SUN-6K-SG03/04 LP1-EU SM2 (6kW)",
+    kw: 6,
+    maxDcInputWatt: 7800,
     vmpMin: 125,
     vmpMax: 425,
     nominalVoltage: 370,
@@ -178,9 +178,9 @@ var DEFAULT_INITIAL_INVERTERS = [
     isc: "17+17"
   },
   {
-    id: "inv_deye_8k_sg01",
+    id: "inv_deye_8k_sg01_lp1",
     brand: "Deye",
-    model: "SUN-8K-SG01LP1-EU (8kW)",
+    model: "SUN-8K-SG01/05LP1-EU-SM2 (8kW)",
     kw: 8,
     maxDcInputWatt: 10400,
     vmpMin: 125,
@@ -193,9 +193,129 @@ var DEFAULT_INITIAL_INVERTERS = [
     isc: "34+34"
   },
   {
-    id: "inv_deye_12k_sg04_3p",
+    id: "inv_solis_s6_6k_plus",
+    brand: "Solis",
+    model: "S6EH1P6K-L-PLUS (6kW)",
+    kw: 6,
+    maxDcInputWatt: 9600,
+    vmpMin: 90,
+    vmpMax: 520,
+    nominalVoltage: 350,
+    maxDcVoltage: 600,
+    mppt: 2,
+    stringPerMppt: "1+1",
+    imp: "16+16",
+    isc: "24+24"
+  },
+  {
+    id: "inv_solis_s6_8k_plu",
+    brand: "Solis",
+    model: "S6-EH1P8K-L-PLU (8kW)",
+    kw: 8,
+    maxDcInputWatt: 12800,
+    vmpMin: 90,
+    vmpMax: 520,
+    nominalVoltage: 350,
+    maxDcVoltage: 600,
+    mppt: 2,
+    stringPerMppt: "2+2",
+    imp: "32+32",
+    isc: "48+48"
+  },
+  {
+    id: "inv_deye_12k_sg02_am3",
     brand: "Deye",
-    model: "SUN-12K-SG04LP3-EU (12kW 3-Phase)",
+    model: "SUN-12K-SG02LP1-EU-AM3 (12kW)",
+    kw: 12,
+    maxDcInputWatt: 15600,
+    vmpMin: 125,
+    vmpMax: 425,
+    nominalVoltage: 370,
+    maxDcVoltage: 500,
+    mppt: 3,
+    stringPerMppt: "2+2+2",
+    imp: "26+26+26",
+    isc: "34+34+34"
+  },
+  {
+    id: "inv_deye_6k_og01_am2",
+    brand: "Deye",
+    model: "SUN-6K-OG01LP1-EU-AM2 (6kW)",
+    kw: 6,
+    maxDcInputWatt: 7800,
+    vmpMin: 120,
+    vmpMax: 430,
+    nominalVoltage: 360,
+    maxDcVoltage: 500,
+    mppt: 2,
+    stringPerMppt: "1+1",
+    imp: "13+13",
+    isc: "17+17"
+  },
+  {
+    id: "inv_deye_15k_sg01_am2h",
+    brand: "Deye",
+    model: "SUN-15K-SG01HP3-EU-AM2(H) (15kW)",
+    kw: 15,
+    maxDcInputWatt: 19500,
+    vmpMin: 150,
+    vmpMax: 850,
+    nominalVoltage: 600,
+    maxDcVoltage: 1e3,
+    mppt: 2,
+    stringPerMppt: "2+1",
+    imp: "26+13",
+    isc: "34+17"
+  },
+  {
+    id: "inv_deye_25k_sg01_am2h",
+    brand: "Deye",
+    model: "SUN-25K-SG01HP3-EU-AM2(H) (25kW)",
+    kw: 25,
+    maxDcInputWatt: 32500,
+    vmpMin: 150,
+    vmpMax: 850,
+    nominalVoltage: 600,
+    maxDcVoltage: 1e3,
+    mppt: 2,
+    stringPerMppt: "2+2",
+    imp: "26+26",
+    isc: "34+34"
+  },
+  {
+    id: "inv_deye_30k_sg02_am3h",
+    brand: "Deye",
+    model: "SUN-30K-SG02HP3-EU-AM3(H) (30kW)",
+    kw: 30,
+    maxDcInputWatt: 39e3,
+    vmpMin: 150,
+    vmpMax: 850,
+    nominalVoltage: 600,
+    maxDcVoltage: 1e3,
+    mppt: 3,
+    stringPerMppt: "2+2+2",
+    imp: "30+30+30",
+    isc: "40+40+40"
+  },
+  {
+    id: "inv_deye_50k_sg01_bm4h",
+    brand: "Deye",
+    model: "SUN-50K-SG01HP3-EU-BM4(H) (50kW)",
+    kw: 50,
+    maxDcInputWatt: 65e3,
+    vmpMin: 150,
+    vmpMax: 850,
+    nominalVoltage: 600,
+    maxDcVoltage: 1e3,
+    mppt: 4,
+    stringPerMppt: "2+2+2+2",
+    imp: "36+36+36+36",
+    isc: "54+54+54+54"
+  },
+  {
+    id: "inv_deye_12k_sg04_lp3_l",
+    brand: "Deye",
+    model: "SUN-12K-SG04LP3(L) (12kW)",
     kw: 12,
     maxDcInputWatt: 15600,
     vmpMin: 200,
@@ -208,64 +328,94 @@ var DEFAULT_INITIAL_INVERTERS = [
     isc: "34+17"
   },
   {
-    id: "inv_huawei_5ktl",
-    brand: "Huawei",
-    model: "SUN2000-5KTL-L1 (5kW)",
-    kw: 5,
-    maxDcInputWatt: 7500,
-    vmpMin: 90,
-    vmpMax: 560,
-    nominalVoltage: 360,
-    maxDcVoltage: 600,
+    id: "inv_deye_20k_sg05_lp3_l",
+    brand: "Deye",
+    model: "SUN-20K-SG05LP3-EU-SM2(L) (20kW)",
+    kw: 20,
+    maxDcInputWatt: 26e3,
+    vmpMin: 200,
+    vmpMax: 650,
+    nominalVoltage: 550,
+    maxDcVoltage: 800,
     mppt: 2,
-    stringPerMppt: "1+1",
-    imp: "12.5+12.5",
-    isc: "18+18"
+    stringPerMppt: "2+2",
+    imp: "26+26",
+    isc: "34+34"
   },
   {
-    id: "inv_growatt_sph6000",
-    brand: "Growatt",
-    model: "SPH 6000 (6kW Hybrid)",
-    kw: 6,
-    maxDcInputWatt: 8e3,
-    vmpMin: 120,
-    vmpMax: 550,
-    nominalVoltage: 360,
-    maxDcVoltage: 550,
+    id: "inv_deye_15k_g05_o",
+    brand: "Deye",
+    model: "SUN-15K-G05(O) (15kW)",
+    kw: 15,
+    maxDcInputWatt: 19500,
+    vmpMin: 200,
+    vmpMax: 850,
+    nominalVoltage: 600,
+    maxDcVoltage: 1e3,
     mppt: 2,
-    stringPerMppt: "1+1",
-    imp: "13.5+13.5",
-    isc: "17+17"
+    stringPerMppt: "2+2",
+    imp: "26+26",
+    isc: "34+34"
   },
   {
-    id: "inv_solis_s5_5k",
-    brand: "Solis",
-    model: "S5-EH1P5K-L (5kW Hybrid)",
-    kw: 5,
-    maxDcInputWatt: 8e3,
-    vmpMin: 90,
-    vmpMax: 520,
-    nominalVoltage: 330,
-    maxDcVoltage: 600,
+    id: "inv_goodwe_12k_et_l_g10",
+    brand: "Goodwe",
+    model: "ET LV, GW12K-ET-L-G10 (12kW)",
+    kw: 12,
+    maxDcInputWatt: 15600,
+    vmpMin: 200,
+    vmpMax: 850,
+    nominalVoltage: 620,
+    maxDcVoltage: 1e3,
     mppt: 2,
-    stringPerMppt: "1+1",
-    imp: "15+15",
-    isc: "22.5+22.5"
+    stringPerMppt: "2+2",
+    imp: "25+25",
+    isc: "32+32"
   },
   {
-    id: "inv_must_5k_ph18",
-    brand: "Must Solar",
-    model: "PH18-5248 PRO (5.2kW)",
-    kw: 5.2,
-    maxDcInputWatt: 5500,
-    vmpMin: 150,
-    vmpMax: 430,
-    nominalVoltage: 320,
-    maxDcVoltage: 450,
-    mppt: 1,
-    stringPerMppt: 1,
-    imp: 18,
-    isc: 22
+    id: "inv_goodwe_15k_et_l_g10",
+    brand: "Goodwe",
+    model: "ET LV, GW15K-ET-L-G10 (15kW)",
+    kw: 15,
+    maxDcInputWatt: 19500,
+    vmpMin: 200,
+    vmpMax: 850,
+    nominalVoltage: 620,
+    maxDcVoltage: 1e3,
+    mppt: 2,
+    stringPerMppt: "2+2",
+    imp: "25+25",
+    isc: "32+32"
+  },
+  {
+    id: "inv_goodwe_20k_et_l_g10",
+    brand: "Goodwe",
+    model: "ET LV, GW20K-ET-L-G10 (20kW)",
+    kw: 20,
+    maxDcInputWatt: 26e3,
+    vmpMin: 200,
+    vmpMax: 850,
+    nominalVoltage: 620,
+    maxDcVoltage: 1e3,
+    mppt: 2,
+    stringPerMppt: "2+2",
+    imp: "30+30",
+    isc: "38+38"
+  },
+  {
+    id: "inv_goodwe_50k_et_10",
+    brand: "Goodwe",
+    model: "GW50K-ET-10 (50kW)",
+    kw: 50,
+    maxDcInputWatt: 65e3,
+    vmpMin: 200,
+    vmpMax: 850,
+    nominalVoltage: 620,
+    maxDcVoltage: 1e3,
+    mppt: 4,
+    stringPerMppt: "2+2+2+2",
+    imp: "30+30+30+30",
+    isc: "38+38+38+38"
   }
 ];
 var DEFAULT_INITIAL_PANELS = [
@@ -1354,6 +1504,43 @@ app.post("/api/sheet-config", (req, res) => {
   saveStorageToDisk();
   res.json({ success: true, config: cfg });
 });
+app.get("/api/supabase-config", (req, res) => {
+  const cfg = memoryStorage["supabase_config"] || {
+    url: process.env.VITE_SUPABASE_URL || "",
+    anonKey: process.env.VITE_SUPABASE_ANON_KEY || "",
+    isConnected: Boolean(process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY)
+  };
+  res.json({ success: true, config: cfg });
+});
+app.post("/api/supabase-config", (req, res) => {
+  const { url, anonKey } = req.body;
+  const cfg = {
+    url: (url || "").trim(),
+    anonKey: (anonKey || "").trim(),
+    isConnected: Boolean((url || "").trim() && (anonKey || "").trim())
+  };
+  memoryStorage["supabase_config"] = cfg;
+  saveStorageToDisk();
+  try {
+    const envPath = import_path.default.join(process.cwd(), ".env");
+    let envContent = import_fs.default.existsSync(envPath) ? import_fs.default.readFileSync(envPath, "utf-8") : "";
+    if (envContent.includes("VITE_SUPABASE_URL=")) {
+      envContent = envContent.replace(/VITE_SUPABASE_URL=.*/, `VITE_SUPABASE_URL=${cfg.url}`);
+    } else {
+      envContent += `
+VITE_SUPABASE_URL=${cfg.url}`;
+    }
+    if (envContent.includes("VITE_SUPABASE_ANON_KEY=")) {
+      envContent = envContent.replace(/VITE_SUPABASE_ANON_KEY=.*/, `VITE_SUPABASE_ANON_KEY=${cfg.anonKey}`);
+    } else {
+      envContent += `
+VITE_SUPABASE_ANON_KEY=${cfg.anonKey}`;
+    }
+    import_fs.default.writeFileSync(envPath, envContent.trim() + "\n", "utf-8");
+  } catch (e) {
+  }
+  res.json({ success: true, config: cfg });
+});
 app.post("/api/publish-update", (req, res) => {
   const { note } = req.body;
   const publishPayload = {
@@ -1464,6 +1651,18 @@ app.post("/api/data/:key", (req, res) => {
   }
   memoryStorage[key] = data;
   saveStorageToDisk();
+  if (key === "inverters" || key === "panels") {
+    try {
+      const pubDir = import_path.default.join(process.cwd(), "public", "data");
+      const docsDir = import_path.default.join(process.cwd(), "docs", "data");
+      if (!import_fs.default.existsSync(pubDir)) import_fs.default.mkdirSync(pubDir, { recursive: true });
+      if (!import_fs.default.existsSync(docsDir)) import_fs.default.mkdirSync(docsDir, { recursive: true });
+      import_fs.default.writeFileSync(import_path.default.join(pubDir, `${key}.json`), JSON.stringify(data, null, 2), "utf-8");
+      import_fs.default.writeFileSync(import_path.default.join(docsDir, `${key}.json`), JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.warn(`Could not write static public/docs file for ${key}:`, e);
+    }
+  }
   broadcastSSE(key, data);
   res.json({ success: true, key, count: Array.isArray(data) ? data.length : 1 });
 });

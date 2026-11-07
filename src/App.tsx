@@ -680,9 +680,12 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = ensureUniqueInverterIds(parsed);
-          try { localStorage.setItem('solar_sizer_custom_inverters_v3', JSON.stringify(sanitized)); } catch (e) {}
-          return sanitized;
+          const isOldDefaultOnly = parsed.some(i => i.id === 'inv_deye_5k_sg04') && !parsed.some(i => i.model?.includes('SUN-6K-SG03') || i.model?.includes('S6EH1P6K'));
+          if (!isOldDefaultOnly) {
+            const sanitized = ensureUniqueInverterIds(parsed);
+            try { localStorage.setItem('solar_sizer_custom_inverters_v3', JSON.stringify(sanitized)); } catch (e) {}
+            return sanitized;
+          }
         }
       }
       return DEFAULT_INVERTER_DATABASE;
@@ -1682,6 +1685,14 @@ export default function App() {
         anonKey: cfg.anonKey
       }));
     } catch (e) {}
+
+    // Persist to Express backend and .env
+    fetch('/api/supabase-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: cfg.url, anonKey: cfg.anonKey })
+    }).catch(() => {});
+
     setStatusMsg({
       text: cfg.isConnected ? "Supabase Cloud Database ချိတ်ဆက်ပြီးပါပြီ!" : "Supabase ဆက်တင် သိမ်းဆည်းပြီးပါပြီ",
       type: 'success'

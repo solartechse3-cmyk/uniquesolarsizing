@@ -1,6 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AdminResourceFile, SpecRequest, UserPresence, Inverter, PanelPreset, BatteryPreset, AppBranding, PaymentConfig, PaymentRecord, MountingDatabase, LicenseToken, AdminContactConfig, BoundDevice, TelegramBotConfig } from '../types';
 import { DEFAULT_BATTERY_PRESETS } from '../data/batteryPresets';
+import { DEFAULT_INVERTER_DATABASE } from '../data/inverterDatabase';
+import { DEFAULT_PANEL_PRESETS } from '../data/panelPresets';
 
 // Default initial resources so Paid users have instant access even before Admin uploads new ones
 export const INITIAL_ADMIN_RESOURCES: AdminResourceFile[] = [
@@ -787,7 +789,7 @@ export async function saveCustomInvertersToCloud(
     localStorage.setItem(STORAGE_CUSTOM_INVERTERS_KEY, JSON.stringify(inverters));
   } catch (e) {}
 
-  // 2. Post to central Express server
+  // 2. Post to central Express server (will also write static files)
   postDataToServer('inverters', inverters);
 
   // 3. Broadcast across local browser tabs instantly
@@ -804,26 +806,46 @@ export async function saveCustomInvertersToCloud(
     } catch (e) {}
   }
 
-  // 4. Persist to Supabase app_settings table for all users
+  // 4. Persist to Supabase tables for all connected GitHub & web users
   const client = initSupabase();
   if (!client) {
     return { success: true, source: 'cloud', count: inverters.length };
   }
 
   try {
-    const { error } = await client
-      .from('app_settings')
-      .upsert({
-        id: 'global_custom_inverters',
-        value: inverters,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+    // Save to app_settings (global_custom_inverters & inverters)
+    try {
+      await client
+        .from('app_settings')
+        .upsert({
+          id: 'global_custom_inverters',
+          value: inverters,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
 
-    if (error) {
-      console.warn('Supabase global_custom_inverters save notice:', error.message);
-      return { success: true, source: 'cloud', count: inverters.length, error: error.message };
-    }
+    try {
+      await client
+        .from('app_settings')
+        .upsert({
+          id: 'inverters',
+          value: inverters,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
 
+    // Save to solar_app_data table
+    try {
+      await client
+        .from('solar_app_data')
+        .upsert({
+          key: 'inverters',
+          data: inverters,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+    } catch (e) {}
+
+    // Broadcast live event via Supabase Realtime
     try {
       const liveChannel = client.channel('solar_global_database_events');
       liveChannel.subscribe((status: string) => {
@@ -845,7 +867,7 @@ export async function saveCustomInvertersToCloud(
 }
 
 /**
- * Fetch Global Inverter Database from Server / Online Supabase (with Local fallback)
+ * Fetch Global Inverter Database from Server / Online Supabase / Static JSON (with Local fallback)
  */
 export async function fetchCustomInvertersFromCloud(): Promise<{ inverters: Inverter[]; source: 'cloud' | 'local' }> {
   // 1. Try Server API first
@@ -857,37 +879,72 @@ export async function fetchCustomInvertersFromCloud(): Promise<{ inverters: Inve
     return { inverters: serverInverters, source: 'cloud' };
   }
 
-  // 2. Try Supabase
+  // 2. Try static data file from GitHub Pages or static host
+  try {
+    const staticRes = await fetch('./data/inverters.json', { cache: 'no-store' }).catch(() => 
+      fetch('/data/inverters.json', { cache: 'no-store' })
+    );
+    if (staticRes && staticRes.ok) {
+      const staticList = await staticRes.json();
+      if (Array.isArray(staticList) && staticList.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_CUSTOM_INVERTERS_KEY, JSON.stringify(staticList));
+        } catch (e) {}
+        return { inverters: staticList, source: 'cloud' };
+      }
+    }
+  } catch (e) {}
+
+  // 3. Try Supabase Cloud
   const client = initSupabase();
   if (client) {
     try {
-      const { data, error } = await client
+      // Check app_settings
+      const { data: d1 } = await client
         .from('app_settings')
         .select('value')
-        .eq('id', 'global_custom_inverters')
+        .in('id', ['global_custom_inverters', 'inverters'])
         .maybeSingle();
 
-      if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
+      if (d1?.value && Array.isArray(d1.value) && d1.value.length > 0) {
         try {
-          localStorage.setItem(STORAGE_CUSTOM_INVERTERS_KEY, JSON.stringify(data.value));
+          localStorage.setItem(STORAGE_CUSTOM_INVERTERS_KEY, JSON.stringify(d1.value));
         } catch (e) {}
-        return { inverters: data.value, source: 'cloud' };
+        return { inverters: d1.value, source: 'cloud' };
+      }
+
+      // Check solar_app_data
+      const { data: d2 } = await client
+        .from('solar_app_data')
+        .select('data')
+        .eq('key', 'inverters')
+        .maybeSingle();
+
+      if (d2?.data && Array.isArray(d2.data) && d2.data.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_CUSTOM_INVERTERS_KEY, JSON.stringify(d2.data));
+        } catch (e) {}
+        return { inverters: d2.data, source: 'cloud' };
       }
     } catch (e) {}
   }
 
-  // 3. Fallback to local storage
+  // 4. Fallback to local storage (sanitizing obsolete cached defaults)
   try {
     const raw = localStorage.getItem(STORAGE_CUSTOM_INVERTERS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return { inverters: parsed, source: 'local' };
+        // If it only contains the old single Deye 5kW and not the new 17 models, use DEFAULT_INVERTER_DATABASE
+        const isOldDefaultOnly = parsed.some(i => i.id === 'inv_deye_5k_sg04') && !parsed.some(i => i.model?.includes('SUN-6K-SG03') || i.model?.includes('S6EH1P6K'));
+        if (!isOldDefaultOnly) {
+          return { inverters: parsed, source: 'local' };
+        }
       }
     }
   } catch (e) {}
 
-  return { inverters: [], source: 'local' };
+  return { inverters: DEFAULT_INVERTER_DATABASE, source: 'local' };
 }
 
 /**
@@ -919,26 +976,46 @@ export async function saveCustomPanelsToCloud(
     } catch (e) {}
   }
 
-  // 4. Persist to Supabase app_settings table for all users
+  // 4. Persist to Supabase tables for all users
   const client = initSupabase();
   if (!client) {
     return { success: true, source: 'cloud', count: panels.length };
   }
 
   try {
-    const { error } = await client
-      .from('app_settings')
-      .upsert({
-        id: 'global_custom_panels',
-        value: panels,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+    // Save to app_settings (global_custom_panels & panels)
+    try {
+      await client
+        .from('app_settings')
+        .upsert({
+          id: 'global_custom_panels',
+          value: panels,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
 
-    if (error) {
-      console.warn('Supabase global_custom_panels save notice:', error.message);
-      return { success: true, source: 'cloud', count: panels.length, error: error.message };
-    }
+    try {
+      await client
+        .from('app_settings')
+        .upsert({
+          id: 'panels',
+          value: panels,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    } catch (e) {}
 
+    // Save to solar_app_data table
+    try {
+      await client
+        .from('solar_app_data')
+        .upsert({
+          key: 'panels',
+          data: panels,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+    } catch (e) {}
+
+    // Broadcast live event via Supabase Realtime
     try {
       const liveChannel = client.channel('solar_global_database_events');
       liveChannel.subscribe((status: string) => {
@@ -960,7 +1037,7 @@ export async function saveCustomPanelsToCloud(
 }
 
 /**
- * Fetch Global Solar Panels Database from Server / Online Supabase (with Local fallback)
+ * Fetch Global Solar Panels Database from Server / Online Supabase / Static JSON (with Local fallback)
  */
 export async function fetchCustomPanelsFromCloud(): Promise<{ panels: PanelPreset[]; source: 'cloud' | 'local' }> {
   // 1. Try Server API first
@@ -972,26 +1049,55 @@ export async function fetchCustomPanelsFromCloud(): Promise<{ panels: PanelPrese
     return { panels: serverPanels, source: 'cloud' };
   }
 
-  // 2. Try Supabase
+  // 2. Try static data file from GitHub Pages or static host
+  try {
+    const staticRes = await fetch('./data/panels.json', { cache: 'no-store' }).catch(() => 
+      fetch('/data/panels.json', { cache: 'no-store' })
+    );
+    if (staticRes && staticRes.ok) {
+      const staticList = await staticRes.json();
+      if (Array.isArray(staticList) && staticList.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_CUSTOM_PANELS_KEY, JSON.stringify(staticList));
+        } catch (e) {}
+        return { panels: staticList, source: 'cloud' };
+      }
+    }
+  } catch (e) {}
+
+  // 3. Try Supabase
   const client = initSupabase();
   if (client) {
     try {
-      const { data, error } = await client
+      const { data: d1 } = await client
         .from('app_settings')
         .select('value')
-        .eq('id', 'global_custom_panels')
+        .in('id', ['global_custom_panels', 'panels'])
         .maybeSingle();
 
-      if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
+      if (d1?.value && Array.isArray(d1.value) && d1.value.length > 0) {
         try {
-          localStorage.setItem(STORAGE_CUSTOM_PANELS_KEY, JSON.stringify(data.value));
+          localStorage.setItem(STORAGE_CUSTOM_PANELS_KEY, JSON.stringify(d1.value));
         } catch (e) {}
-        return { panels: data.value, source: 'cloud' };
+        return { panels: d1.value, source: 'cloud' };
+      }
+
+      const { data: d2 } = await client
+        .from('solar_app_data')
+        .select('data')
+        .eq('key', 'panels')
+        .maybeSingle();
+
+      if (d2?.data && Array.isArray(d2.data) && d2.data.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_CUSTOM_PANELS_KEY, JSON.stringify(d2.data));
+        } catch (e) {}
+        return { panels: d2.data, source: 'cloud' };
       }
     } catch (e) {}
   }
 
-  // 3. Fallback to local storage
+  // 4. Fallback to local storage
   try {
     const raw = localStorage.getItem(STORAGE_CUSTOM_PANELS_KEY);
     if (raw) {
@@ -1002,7 +1108,7 @@ export async function fetchCustomPanelsFromCloud(): Promise<{ panels: PanelPrese
     }
   } catch (e) {}
 
-  return { panels: [], source: 'local' };
+  return { panels: DEFAULT_PANEL_PRESETS, source: 'local' };
 }
 
 // ----------------------------------------------------
