@@ -243,13 +243,13 @@ export const SolarMountingCalculator: React.FC<SolarMountingCalculatorProps> = (
   const [includeWalkwayBoq, setIncludeWalkwayBoq] = useState<boolean>(true);
 
   // 2. Solar Panel Specs & Database Integration State
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('panel_jinko_590w');
-  const [panelWatt, setPanelWatt] = useState<number>(590);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('panel_jinko_585_tiger_neo');
+  const [panelWatt, setPanelWatt] = useState<number>(585);
   const [panelWidth, setPanelWidth] = useState<number>(1.134);
   const [panelLength, setPanelLength] = useState<number>(2.278);
   const [panelThickness, setPanelThickness] = useState<number>(30);
-  const [panelVoc, setPanelVoc] = useState<number>(52.2);
-  const [panelVmp, setPanelVmp] = useState<number>(44.1);
+  const [panelVoc, setPanelVoc] = useState<number>(51.9);
+  const [panelVmp, setPanelVmp] = useState<number>(43.8);
 
   // Panel Database Modal & Add Custom Panel Form State
   const [showPanelDbModal, setShowPanelDbModal] = useState<boolean>(false);
@@ -257,12 +257,12 @@ export const SolarMountingCalculator: React.FC<SolarMountingCalculatorProps> = (
   const [showAddPanelForm, setShowAddPanelForm] = useState<boolean>(false);
   const [newPanelForm, setNewPanelForm] = useState({
     name: '',
-    watt: 590,
+    watt: 585,
     lengthMm: 2278,
     widthMm: 1134,
     thickness: 30,
-    voc: 52.2,
-    vmp: 44.1
+    voc: 51.9,
+    vmp: 43.8
   });
 
   // 3. Mounting Hardware Parameters
@@ -849,24 +849,6 @@ export const SolarMountingCalculator: React.FC<SolarMountingCalculatorProps> = (
 
     return list;
   }, [customPanels, mountingDatabase?.panels]);
-
-  // Auto-select preferred panel (Jinko 590W) on initial load or if previously set to old 585W default
-  useEffect(() => {
-    if (allDatabasePanels.length > 0) {
-      if (selectedPresetId === 'panel_jinko_585_tiger_neo' || !allDatabasePanels.some(p => p.id === selectedPresetId)) {
-        const preferred = allDatabasePanels.find(p => p.id === 'panel_jinko_590w' || p.name?.includes('590W')) || allDatabasePanels[0];
-        if (preferred) {
-          setSelectedPresetId(preferred.id);
-          setPanelWatt(preferred.watt);
-          setPanelWidth(preferred.width ?? 1.134);
-          setPanelLength(preferred.length ?? 2.278);
-          setPanelThickness(preferred.thickness ?? 30);
-          if (preferred.voc) setPanelVoc(preferred.voc);
-          if (preferred.vmp) setPanelVmp(preferred.vmp);
-        }
-      }
-    }
-  }, [allDatabasePanels]);
 
   // Select a panel from Database
   const handleSelectDatabasePanel = (panel: PanelPreset) => {

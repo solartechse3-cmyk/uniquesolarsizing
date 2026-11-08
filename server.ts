@@ -1746,28 +1746,6 @@ app.post("/api/publish-update", (req, res) => {
     note: note || "Admin published live update"
   };
 
-  // Write static files to public/data and docs/data for GitHub Pages sync
-  try {
-    const pubDir = path.join(process.cwd(), "public", "data");
-    const docsDir = path.join(process.cwd(), "docs", "data");
-    if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
-    if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
-    if (memoryStorage["inverters"]) {
-      fs.writeFileSync(path.join(pubDir, "inverters.json"), JSON.stringify(memoryStorage["inverters"], null, 2), "utf-8");
-      fs.writeFileSync(path.join(docsDir, "inverters.json"), JSON.stringify(memoryStorage["inverters"], null, 2), "utf-8");
-    }
-    if (memoryStorage["panels"]) {
-      fs.writeFileSync(path.join(pubDir, "panels.json"), JSON.stringify(memoryStorage["panels"], null, 2), "utf-8");
-      fs.writeFileSync(path.join(docsDir, "panels.json"), JSON.stringify(memoryStorage["panels"], null, 2), "utf-8");
-    }
-    if (memoryStorage["mounting_database"]) {
-      fs.writeFileSync(path.join(pubDir, "mounting_database.json"), JSON.stringify(memoryStorage["mounting_database"], null, 2), "utf-8");
-      fs.writeFileSync(path.join(docsDir, "mounting_database.json"), JSON.stringify(memoryStorage["mounting_database"], null, 2), "utf-8");
-    }
-  } catch (e) {
-    console.warn("Could not write static files during publish:", e);
-  }
-
   broadcastSSE("system_published", publishPayload);
   res.json({ success: true, publishedAt: publishPayload.publishedAt });
 });
@@ -1889,8 +1867,8 @@ app.post("/api/data/:key", (req, res) => {
   memoryStorage[key] = data;
   saveStorageToDisk();
 
-  // If inverters, panels or mounting_database are updated, also write static JSON files to public/data/ and docs/data/ for GitHub Pages
-  if (key === 'inverters' || key === 'panels' || key === 'mounting_database') {
+  // If inverters or panels are updated, also write static JSON files to public/data/ and docs/data/ for GitHub Pages
+  if (key === 'inverters' || key === 'panels') {
     try {
       const pubDir = path.join(process.cwd(), "public", "data");
       const docsDir = path.join(process.cwd(), "docs", "data");

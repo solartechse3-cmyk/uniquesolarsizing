@@ -119,23 +119,6 @@ export const DEFAULT_MOUNTING_PANELS: MountingPanelItem[] = [
     isc: 14.54,
     efficiency: 22.5,
     priceMmk: 225000
-  },
-  {
-    id: 'panel_risen_410_titans',
-    brand: 'Risen Solar',
-    model: 'Titan S RSM40-8-410M (High Efficiency)',
-    watt: 410,
-    lengthMm: 1754,
-    widthMm: 1096,
-    thicknessMm: 30,
-    weightKg: 21.0,
-    cellType: 'Mono-PERC Half-Cut',
-    voc: 41.90,
-    vmp: 34.89,
-    imp: 11.76,
-    isc: 12.47,
-    efficiency: 21.3,
-    priceMmk: 210000
   }
 ];
 

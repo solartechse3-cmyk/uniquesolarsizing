@@ -1439,12 +1439,6 @@ export function subscribeToGlobalDatabaseUpdates(callbacks: {
             callbacks.onAppBrandingUpdate(rec.value);
           }
         })
-        .on('broadcast', { event: 'system_published' }, (payload: any) => {
-          if (isCleanedUp) return;
-          if (callbacks.onSystemPublished) {
-            callbacks.onSystemPublished(payload?.payload || { timestamp: new Date().toISOString() });
-          }
-        })
         .subscribe();
     } catch (e) {}
   }
@@ -2541,7 +2535,7 @@ export async function publishLiveSystemUpdate(note?: string): Promise<{ success:
     }
   } catch (e) {}
 
-  // 2. Broadcast on Supabase channels if available
+  // 2. Broadcast on Supabase channel if available
   const supabase = initSupabase();
   if (supabase) {
     try {
@@ -2551,18 +2545,8 @@ export async function publishLiveSystemUpdate(note?: string): Promise<{ success:
         event: 'system_published',
         payload: { publishedAt: new Date().toISOString(), note }
       });
+      return { success: true, publishedAt: new Date().toISOString() };
     } catch (e) {}
-
-    try {
-      const channel2 = supabase.channel('solar_global_database_events');
-      await channel2.send({
-        type: 'broadcast',
-        event: 'system_published',
-        payload: { publishedAt: new Date().toISOString(), note }
-      });
-    } catch (e) {}
-
-    return { success: true, publishedAt: new Date().toISOString() };
   }
 
   return { success: true, publishedAt: new Date().toISOString() };
